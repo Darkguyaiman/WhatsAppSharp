@@ -1,0 +1,10 @@
+bin/
+obj/
+App_Data/
+.codex-work/
+src/MessagingApp/wwwroot/uploads/
+*.user
+.env
+.codex-build/
+.impeccable/
+**/__pycache__/

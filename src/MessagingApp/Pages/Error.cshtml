@@ -1,0 +1,17 @@
+﻿@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="error-page">
+    <article>
+        <h1>Something went wrong</h1>
+        <p>The page couldn’t be loaded. Go back to chats and try again.</p>
+        @if (Model.ShowRequestId)
+        {
+            <p>Request ID: <code>@Model.RequestId</code></p>
+        }
+        <p><a href="/Chat">Back to chats</a></p>
+    </article>
+</div>

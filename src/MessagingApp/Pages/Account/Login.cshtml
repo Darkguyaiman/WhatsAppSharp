@@ -1,0 +1,46 @@
+@page
+@model MessagingApp.Pages.Account.LoginModel
+@{ ViewData["Title"] = "Log in"; }
+<div class="login-page">
+    <header class="login-header">
+        <a class="login-brand" asp-page="/Account/Login"><img src="/images/login-brand.svg" width="34" height="34" alt="" /><span>WhatsApp Web</span></a>
+    </header>
+    <main class="login-content">
+        <section class="login-banner" aria-labelledby="browser-title">
+            <img src="/images/welcome-laptop.svg" width="132" height="100" alt="" />
+            <div><h2 id="browser-title">Your conversations, on your computer</h2><p>Send messages, share files, and stay connected.<br class="desktop-break" /> All from your browser.</p></div>
+            <span class="login-browser-note"><i data-lucide="globe" aria-hidden="true"></i> Made for the web</span>
+        </section>
+        <section class="login-panel" aria-labelledby="login-title">
+            <div class="login-copy">
+                <h1 id="login-title">Log in to WhatsApp Web</h1>
+                <p class="login-intro">A little closer, even from a distance.</p>
+                <ol class="login-steps">
+                    <li>Continue with your Google account</li>
+                    <li>Make yourself at home with your profile</li>
+                    <li>Start a conversation and keep in touch</li>
+                </ol>
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage)) { <div class="login-alert" role="alert">@Model.ErrorMessage</div> }
+                <form method="post" asp-page-handler="Google" class="google-login" asp-route-returnUrl="@Model.ReturnUrl">
+                    <button type="submit" class="google-button" aria-describedby="google-note"><img src="/images/google-mark.svg" width="22" height="22" alt="" /><span>Continue with Google</span><i data-lucide="arrow-right" aria-hidden="true"></i></button>
+                    <label class="login-remember"><input asp-for="RememberMe" /><span>Stay logged in on this browser</span></label>
+                </form>
+                <p id="google-note" class="login-note">Choose your Google account to sign in or create an account.</p>
+                <div class="login-install" id="login-install">
+                    <button type="button" id="install-app-btn" class="login-install-btn" onclick="installApp()">
+                        <i data-lucide="download" aria-hidden="true"></i>
+                        <span>Install app</span>
+                    </button>
+                    <p id="install-description" class="login-note">Install for a dedicated window and quick access on this device.</p>
+                </div>
+            </div>
+            <div class="login-art"><img src="/images/login-connect.png" width="360" height="270" alt="A laptop and phone with green message bubbles" /><p>Same conversations.<br />A bigger space to connect.</p></div>
+        </section>
+        <footer class="login-footer">
+            <p class="login-disclaimer"><i data-lucide="message-circle" aria-hidden="true"></i> An independent messaging app. Not affiliated with WhatsApp.</p>
+            <a class="login-privacy" asp-page="/Privacy">Privacy policy</a>
+        </footer>
+    </main>
+</div>
+
+

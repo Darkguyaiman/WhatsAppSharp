@@ -1,0 +1,175 @@
+@page
+@model MessagingApp.Pages.Account.SettingsModel
+@{ ViewData["Title"] = "Settings"; }
+<form id="anti-forgery-form" class="visually-hidden">@Html.AntiForgeryToken()</form>
+<div class="account-page settings-page">
+    <header class="account-header">
+        <a href="/Chat" class="icon-btn" aria-label="Back to chats"><i data-lucide="arrow-left"></i></a>
+        <span>Settings</span>
+    </header>
+    <div class="settings-shell">
+        <nav class="settings-nav" aria-label="Settings sections">
+            <a href="#settings-account" class="settings-nav-item is-active" data-section="account" title="Account"><i data-lucide="user"></i><span>Account</span></a>
+            <a href="#settings-appearance" class="settings-nav-item" data-section="appearance" title="Appearance"><i data-lucide="palette"></i><span>Appearance</span></a>
+            <a href="#settings-chats" class="settings-nav-item" data-section="chats" title="Chats"><i data-lucide="message-square"></i><span>Chats</span></a>
+            <a href="#settings-notifications" class="settings-nav-item" data-section="notifications" title="Notifications"><i data-lucide="bell"></i><span>Notifications</span></a>
+            <a href="#settings-app" class="settings-nav-item" data-section="app" title="App"><i data-lucide="download"></i><span>App</span></a>
+            <a href="#settings-help" class="settings-nav-item" data-section="help" title="Help"><i data-lucide="circle-help"></i><span>Help</span></a>
+        </nav>
+        <main class="settings-main">
+            <section id="settings-account" class="settings-panel is-active" data-section="account" aria-labelledby="settings-account-title">
+                <div class="account-intro">
+                    <h1 id="settings-account-title">Account</h1>
+                    <p>Your profile, username, and sign-in details.</p>
+                </div>
+                <a asp-page="/Account/Profile" class="settings-profile-card">
+                    <img src="@Model.AvatarUrl" width="72" height="72" alt="" />
+                    <div>
+                        <strong>@Model.CurrentUser.DisplayName</strong>
+                        <span>@@@Model.CurrentUser.Username</span>
+                        <p>@Model.AboutText</p>
+                    </div>
+                    <i data-lucide="chevron-right"></i>
+                </a>
+                <div class="settings-qr" id="settings-qr" data-contact-link="@Model.ContactLink">
+                    <div class="qr-frame">
+                        <img id="settings-qr-image" src="/Chat?handler=ContactQr" width="196" height="196" alt="QR code people can scan to message you" />
+                    </div>
+                    <div>
+                        <h2>QR code</h2>
+                        <p>Show this so someone can scan it and message you. They don’t need your number or username.</p>
+                        <div class="qr-actions">
+                            <button type="button" class="btn btn-primary" onclick="shareSettingsQr()">Share code</button>
+                            <a class="btn btn-ghost" href="/Chat?handler=ContactQr" download="contact-qr.svg">Download</a>
+                            <a class="btn btn-ghost" href="/Chat?scan=1">Scan a code</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <div class="settings-row">
+                        <i data-lucide="mail"></i>
+                        <div>
+                            <h4>Google account</h4>
+                            <p>@Model.CurrentUser.Email</p>
+                        </div>
+                        <i data-lucide="lock-keyhole" class="settings-row-lock"></i>
+                    </div>
+                    <a asp-page="/Account/Profile" class="settings-row is-link">
+                        <i data-lucide="user-round-pen"></i>
+                        <div>
+                            <h4>Edit profile</h4>
+                            <p>Change your name, photo, username, or about.</p>
+                        </div>
+                        <i data-lucide="chevron-right"></i>
+                    </a>
+                </div>
+                <a asp-page="/Account/Logout" class="settings-row is-link is-danger" onclick="logoutWithPush(event)">
+                    <i data-lucide="log-out"></i>
+                    <div>
+                        <h4>Log out</h4>
+                        <p>Sign out of WhatsApp on this device.</p>
+                    </div>
+                </a>
+            </section>
+
+            <section id="settings-appearance" class="settings-panel" data-section="appearance" aria-labelledby="settings-appearance-title" hidden>
+                <div class="account-intro">
+                    <h1 id="settings-appearance-title">Appearance</h1>
+                    <p>Choose how WhatsApp looks on this device.</p>
+                </div>
+                <div class="settings-group">
+                    <div class="settings-preference">
+                        <div>
+                            <h4>Dark mode</h4>
+                            <p>A softer view for dim surroundings.</p>
+                        </div>
+                        <button type="button" class="theme-switch" role="switch" aria-label="Dark mode" aria-checked="true" onclick="toggleSettingsTheme()">
+                            <i data-lucide="sun"></i>
+                            <span class="switch-track"><span class="switch-thumb"></span></span>
+                            <i data-lucide="moon"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="settings-chats" class="settings-panel" data-section="chats" aria-labelledby="settings-chats-title" hidden>
+                <div class="account-intro">
+                    <h1 id="settings-chats-title">Chats</h1>
+                    <p>Sound and chat preferences for this device.</p>
+                </div>
+                <div class="settings-group">
+                    <div class="settings-preference">
+                        <div>
+                            <h4>Message sounds</h4>
+                            <p>Play a tone for incoming messages while you’re away from the app.</p>
+                        </div>
+                        <button type="button" class="sound-switch" role="switch" aria-label="Message sounds" aria-checked="true" onclick="toggleSettingsSounds()">
+                            <span class="switch-track"><span class="switch-thumb"></span></span>
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-ghost sound-preview" onclick="previewSettingsSound()">Preview sound</button>
+                </div>
+            </section>
+
+            <section id="settings-notifications" class="settings-panel" data-section="notifications" aria-labelledby="settings-notifications-title" hidden>
+                <div class="account-intro">
+                    <h1 id="settings-notifications-title">Notifications</h1>
+                    <p>Stay informed when new messages arrive.</p>
+                </div>
+                <div class="settings-group">
+                    <div class="settings-section settings-section-inline">
+                        <i data-lucide="bell"></i>
+                        <div>
+                            <h4>Message notifications</h4>
+                            <p id="push-description">Get notified when a new message arrives, even when the app is closed.</p>
+                            <button type="button" id="push-toggle-btn" class="btn btn-primary" onclick="togglePushNotifications()">Enable notifications</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="settings-app" class="settings-panel" data-section="app" aria-labelledby="settings-app-title" hidden>
+                <div class="account-intro">
+                    <h1 id="settings-app-title">App</h1>
+                    <p>Install WhatsApp for quicker access on this device.</p>
+                </div>
+                <div class="settings-group">
+                    <div class="settings-section settings-section-inline">
+                        <i data-lucide="download"></i>
+                        <div>
+                            <h4>Take your chats with you</h4>
+                            <p id="install-description">Install the app for a dedicated window and quick access.</p>
+                            <button type="button" id="install-app-btn" class="btn btn-primary" onclick="installApp()">Install app</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="settings-help" class="settings-panel" data-section="help" aria-labelledby="settings-help-title" hidden>
+                <div class="account-intro">
+                    <h1 id="settings-help-title">Help</h1>
+                    <p>Privacy information and account support.</p>
+                </div>
+                <div class="settings-group">
+                    <a asp-page="/Privacy" class="settings-row is-link">
+                        <i data-lucide="shield"></i>
+                        <div>
+                            <h4>Privacy</h4>
+                            <p>How this messenger stores and shares your data.</p>
+                        </div>
+                        <i data-lucide="chevron-right"></i>
+                    </a>
+                    <a href="/Chat" class="settings-row is-link">
+                        <i data-lucide="message-circle"></i>
+                        <div>
+                            <h4>Back to chats</h4>
+                            <p>Return to your conversations.</p>
+                        </div>
+                        <i data-lucide="chevron-right"></i>
+                    </a>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+@section Scripts { <script src="/js/settings.js" asp-append-version="true" defer></script> }

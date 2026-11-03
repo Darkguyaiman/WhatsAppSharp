@@ -1,0 +1,29 @@
+@page
+@model MessagingApp.Pages.Account.ProfileModel
+@{ ViewData["Title"] = "Profile"; }
+<div class="account-page">
+    <header class="account-header"><a href="/Chat" class="icon-btn" aria-label="Back to chats"><i data-lucide="arrow-left"></i></a><span>Profile</span><button type="button" class="theme-switch" role="switch" aria-label="Dark mode" aria-checked="true" onclick="toggleAccountTheme(this)"><i data-lucide="sun"></i><span class="switch-track"><span class="switch-thumb"></span></span><i data-lucide="moon"></i></button></header>
+    <main class="account-content">
+        <div class="account-intro"><h1>Make yourself at home.</h1><p>A name, a photo, a little about you.</p></div>
+        <form method="post" class="account-editor" id="profile-editor">
+            <section class="account-avatar-section" aria-label="Profile photo">
+                <img id="currentAvatarPreview" src="@Model.AvatarPreviewUrl" width="128" height="128" alt="Your profile photo" />
+                <input type="hidden" asp-for="AvatarUrl" id="selectedAvatarInput" />
+                <label class="btn btn-primary photo-upload">Change photo<input id="profile-photo" type="file" accept="image/jpeg,image/png,image/gif,image/webp" /></label>
+                <button type="button" class="btn btn-ghost" id="use-initials" data-initials="@Model.InitialsAvatarUrl">Use initials</button>
+                <p>JPG, PNG, GIF, or WebP<br />Up to 15 MB</p>
+            </section>
+            <section class="account-fields" aria-label="Profile details">
+                @if (!string.IsNullOrEmpty(Model.SuccessMessage)) { <div class="alert is-ok" role="status">@Model.SuccessMessage</div> }
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage)) { <div class="alert" role="alert">@Model.ErrorMessage</div> }
+                <div id="profile-feedback" role="status" class="field-error"></div>
+                <div class="field"><label asp-for="DisplayName">Your name</label><input asp-for="DisplayName" class="field-control" autocomplete="name" maxlength="100" required /><span asp-validation-for="DisplayName" class="field-error"></span></div>
+                <div class="field"><label asp-for="Username">Username</label><div class="username-field"><span aria-hidden="true">@@</span><input asp-for="Username" class="field-control" autocomplete="username" minlength="3" maxlength="50" required /></div><p class="field-hint">People can find you by this username. Letters, numbers, dots, and underscores.</p><span asp-validation-for="Username" class="field-error"></span></div>
+                <div class="field"><label asp-for="About">About</label><textarea asp-for="About" class="field-control" maxlength="255" rows="3" placeholder="Tell people a little about yourself."></textarea><span asp-validation-for="About" class="field-error"></span></div>
+                <div class="account-email"><i data-lucide="mail"></i><div><span>Google account</span><p>@Model.Email</p></div><i data-lucide="lock-keyhole"></i></div>
+                <div class="account-actions"><a href="/Chat" class="btn btn-ghost">Back to chats</a><button type="submit" class="btn btn-primary" id="save-profile">Save changes</button></div>
+            </section>
+        </form>
+    </main>
+</div>
+@section Scripts { <script src="/js/profile.js" asp-append-version="true" defer></script> }

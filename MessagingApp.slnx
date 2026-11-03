@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MessagingApp/MessagingApp.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="Tests/SmokeTests/MessagingApp.SmokeTests.csproj" />
+  </Folder>
+</Solution>

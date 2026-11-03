@@ -1,0 +1,23 @@
+<div id="feature-screen" class="feature-screen hidden" aria-labelledby="feature-title">
+    <header class="feature-header"><button type="button" class="icon-btn" aria-label="Back to chats" onclick="closeFeature()"><i data-lucide="arrow-left"></i></button><div><h1 id="feature-title"></h1><p id="feature-description"></p></div><div id="feature-actions"></div></header>
+    <div id="feature-body" class="feature-body" aria-live="polite"></div>
+</div>
+<div id="status-viewer-modal" class="modal-layer hidden"><section class="modal-card status-viewer" role="dialog" aria-modal="true" aria-labelledby="status-viewer-name">
+    <header class="modal-head"><div><h2 id="status-viewer-name"></h2><p id="status-viewer-time"></p></div><button type="button" class="icon-btn" onclick="closeAllModals()" aria-label="Close status"><i data-lucide="x"></i></button></header><div id="status-stage"></div><footer><button type="button" class="icon-btn" id="status-previous" onclick="stepStatus(-1)" aria-label="Previous status"><i data-lucide="chevron-left"></i></button><span id="status-viewer-meta"></span><button type="button" id="status-delete" class="btn btn-ghost" onclick="deleteCurrentStatus()">Delete</button><button type="button" class="icon-btn" id="status-next" onclick="stepStatus(1)" aria-label="Next status"><i data-lucide="chevron-right"></i></button></footer>
+</section></div>
+<div id="community-group-modal" class="modal-layer hidden"><section class="modal-card social-form" role="dialog" aria-modal="true" aria-labelledby="community-group-title"><header class="modal-head"><h2 id="community-group-title">New community group</h2><button type="button" class="icon-btn" onclick="closeAllModals()" aria-label="Close"><i data-lucide="x"></i></button></header><form id="community-group-form"><p class="social-help">Everyone in this community will join the group.</p><label for="community-group-name">Group name</label><input id="community-group-name" class="field-control" required maxlength="100" /><p id="community-group-error" role="alert" class="field-error"></p><button class="btn btn-primary" type="submit">Create group</button></form></section></div>
+<div id="call-backdrop" class="call-backdrop hidden" aria-hidden="true"></div>
+<div id="call-panel" class="call-panel hidden" role="dialog" aria-modal="true" aria-labelledby="call-peer-name">
+    <header><span id="call-type-label">Voice call</span><button type="button" class="icon-btn" onclick="minimizeCall()" aria-label="Minimize call"><i data-lucide="minimize-2"></i></button></header>
+    <div class="call-body">
+    <div class="call-peer"><img id="call-peer-avatar" src="/images/favicon.svg" width="88" height="88" alt="" /><h2 id="call-peer-name"></h2><p id="call-state" role="status"></p><span id="call-timer"></span></div>
+    <div id="call-video-stage" class="call-video-stage hidden"><video id="call-remote-video" autoplay playsinline></video><video id="call-local-video" autoplay playsinline muted></video></div>
+    <audio id="call-remote-audio" autoplay></audio>
+    <p id="call-quality" class="call-quality" role="status"></p>
+    </div><footer class="call-footer"><button type="button" class="btn btn-ghost hidden" id="call-play-audio" onclick="resumeCallAudio()">Play call audio</button>
+    <div id="call-incoming-actions" class="call-controls hidden"><button type="button" class="call-control call-hangup" onclick="declineCall()"><i data-lucide="phone-off"></i><span>Decline</span></button><button type="button" class="call-control call-answer" onclick="acceptIncomingCall()"><i data-lucide="phone"></i><span>Answer</span></button></div>
+    <div id="call-active-actions" class="call-controls"><button type="button" class="call-control" id="call-mute" aria-pressed="false" onclick="toggleCallMute()"><i data-lucide="mic"></i><span>Mute</span></button><button type="button" class="call-control hidden" id="call-camera" aria-pressed="false" onclick="toggleCallCamera()"><i data-lucide="video"></i><span>Camera</span></button><button type="button" class="call-control call-hangup" onclick="endCurrentCall()"><i data-lucide="phone-off"></i><span>End call</span></button></div>
+</footer></div>
+<button type="button" id="call-mini" class="call-mini hidden" onclick="restoreCall()"><i data-lucide="phone"></i><span id="call-mini-label">Return to call</span></button>
+
+

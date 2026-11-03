@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="g-group" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#g-group)"/>
+  <!-- Left person -->
+  <circle cx="34" cy="40" r="12" fill="#ffffff" opacity="0.8"/>
+  <path d="M 16 78 C 16 64, 25 60, 34 60 C 43 60, 52 64, 52 78 Z" fill="#ffffff" opacity="0.8"/>
+  <!-- Right person -->
+  <circle cx="66" cy="40" r="12" fill="#ffffff" opacity="0.8"/>
+  <path d="M 48 78 C 48 64, 57 60, 66 60 C 75 60, 84 64, 84 78 Z" fill="#ffffff" opacity="0.8"/>
+  <!-- Center front person -->
+  <circle cx="50" cy="46" r="14" fill="#ffffff"/>
+  <path d="M 28 85 C 28 70, 39 66, 50 66 C 61 66, 72 70, 72 85 Z" fill="#ffffff"/>
+</svg>

@@ -1,0 +1,99 @@
+@page
+@model MessagingApp.Pages.Status.ComposeModel
+@{ ViewData["Title"] = "Share an update"; }
+<form id="anti-forgery-form" class="visually-hidden">@Html.AntiForgeryToken()</form>
+<div class="account-page status-compose-page">
+    <header class="account-header">
+        <a href="/Statuses" class="icon-btn" aria-label="Back to status"><i data-lucide="arrow-left"></i></a>
+        <span>Share an update</span>
+    </header>
+    <main class="status-compose-main">
+        <form id="status-compose-form" class="status-compose-layout" novalidate>
+            <div class="status-compose-editor">
+                <p class="status-compose-help">Visible for 24 hours to people in your chats and communities.</p>
+
+                <div class="field">
+                    <label for="status-text">Your update</label>
+                    <div class="status-editor">
+                        <div class="status-toolbar" role="toolbar" aria-label="Text formatting">
+                            <button type="button" class="status-tool" data-format="bold" aria-pressed="false" title="Bold"><i data-lucide="bold"></i></button>
+                            <button type="button" class="status-tool" data-format="italic" aria-pressed="false" title="Italic"><i data-lucide="italic"></i></button>
+                            <span class="status-tool-divider" aria-hidden="true"></span>
+                            <button type="button" class="status-tool" data-align="left" aria-pressed="false" title="Align left"><i data-lucide="align-left"></i></button>
+                            <button type="button" class="status-tool is-active" data-align="center" aria-pressed="true" title="Align center"><i data-lucide="align-center"></i></button>
+                            <button type="button" class="status-tool" data-align="right" aria-pressed="false" title="Align right"><i data-lucide="align-right"></i></button>
+                            <span class="status-tool-divider" aria-hidden="true"></span>
+                            <label class="status-tool-select">
+                                <span class="visually-hidden">Text size</span>
+                                <select id="status-font-size" aria-label="Text size">
+                                    <option value="sm">Small</option>
+                                    <option value="md" selected>Medium</option>
+                                    <option value="lg">Large</option>
+                                    <option value="xl">Extra large</option>
+                                </select>
+                            </label>
+                            <button type="button" class="status-tool" id="status-emoji-toggle" aria-expanded="false" aria-controls="status-emoji-panel" title="Emoji"><i data-lucide="smile"></i></button>
+                        </div>
+                        <div id="status-emoji-panel" class="emoji-board status-emoji-panel hidden" data-emoji-picker role="dialog" aria-label="Emoji"></div>
+                        <textarea id="status-text" class="field-control" maxlength="700" rows="5" placeholder="What’s happening?" aria-describedby="status-limit"></textarea>
+                    </div>
+                    <span id="status-limit" class="field-hint"><span id="status-count">0</span> / 700</span>
+                </div>
+
+                <div class="field">
+                    <span class="status-upload-label" id="status-photo-label">Add a photo</span>
+                    <div id="status-dropzone" class="status-dropzone" role="button" tabindex="0" aria-labelledby="status-photo-label" aria-describedby="status-photo-hint">
+                        <input type="file" id="status-photo" class="visually-hidden" accept="image/jpeg,image/png,image/gif,image/webp" />
+                        <div id="status-dropzone-empty" class="status-dropzone-empty">
+                            <i data-lucide="image-plus"></i>
+                            <strong>Drop a photo here</strong>
+                            <span>or click to browse · JPG, PNG, GIF, WebP · up to 15 MB</span>
+                        </div>
+                        <div id="status-dropzone-filled" class="status-dropzone-filled hidden">
+                            <img id="status-dropzone-thumb" alt="" />
+                            <div>
+                                <strong id="status-dropzone-name">Photo ready</strong>
+                                <span id="status-dropzone-meta"></span>
+                            </div>
+                            <button type="button" class="btn btn-ghost status-dropzone-clear" id="status-photo-clear" aria-label="Remove photo">Remove</button>
+                        </div>
+                    </div>
+                    <span id="status-photo-hint" class="visually-hidden">Drag and drop an image, or press Enter to choose a file.</span>
+                    <div id="status-image-tools" class="status-image-tools hidden">
+                        <label for="status-image-scale">Photo size <span id="status-image-scale-value">100%</span></label>
+                        <input type="range" id="status-image-scale" min="50" max="150" step="5" value="100" aria-valuemin="50" aria-valuemax="150" aria-valuenow="100" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <span class="status-upload-label" id="status-color-label">Background</span>
+                    <div class="status-color-swatches" role="radiogroup" aria-labelledby="status-color-label">
+                        <button type="button" class="status-swatch is-selected" role="radio" aria-checked="true" data-color="#008069" style="background:#008069" aria-label="Forest green"></button>
+                        <button type="button" class="status-swatch" role="radio" aria-checked="false" data-color="#5151a8" style="background:#5151a8" aria-label="Indigo"></button>
+                        <button type="button" class="status-swatch" role="radio" aria-checked="false" data-color="#8b4057" style="background:#8b4057" aria-label="Berry"></button>
+                        <button type="button" class="status-swatch" role="radio" aria-checked="false" data-color="#305f7b" style="background:#305f7b" aria-label="Ocean"></button>
+                        <button type="button" class="status-swatch" role="radio" aria-checked="false" data-color="#42594b" style="background:#42594b" aria-label="Sage"></button>
+                    </div>
+                    <input type="hidden" id="status-color" value="#008069" />
+                </div>
+
+                <p id="status-compose-error" role="alert" class="field-error"></p>
+                <div class="status-compose-actions">
+                    <a href="/Statuses" class="btn btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-primary" id="status-submit">Post status</button>
+                </div>
+            </div>
+
+            <aside class="status-compose-preview" aria-label="Status preview">
+                <div class="status-preview-frame">
+                    <span class="status-preview-label">Preview</span>
+                    <div class="status-preview" id="status-preview" style="background-color:#008069" aria-live="polite">
+                        <img id="status-preview-image" class="hidden" alt="Status photo preview" />
+                        <p id="status-preview-text" class="status-preview-placeholder">What’s happening?</p>
+                    </div>
+                </div>
+            </aside>
+        </form>
+    </main>
+</div>
+@section Scripts { <script src="/js/status-compose.js" asp-append-version="true" defer></script> }

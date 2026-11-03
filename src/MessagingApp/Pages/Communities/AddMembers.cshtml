@@ -1,0 +1,33 @@
+@page "{id:int}"
+@model MessagingApp.Pages.Communities.AddMembersModel
+@{ ViewData["Title"] = "Add people"; }
+<form id="anti-forgery-form" class="visually-hidden">@Html.AntiForgeryToken()</form>
+<div class="account-page community-form-page">
+    <header class="account-header">
+        <a href="/Communities" class="icon-btn" aria-label="Back to communities"><i data-lucide="arrow-left"></i></a>
+        <span>Add people</span>
+    </header>
+    <main class="community-form-main">
+        <form id="community-form" class="community-form-card" data-mode="members" data-community-id="@Model.CommunityId" novalidate>
+            <div class="account-intro">
+                <h1>Add people</h1>
+                <p>Invite more people to <strong>@Model.CommunityTitle</strong>. They’ll join this community and its groups.</p>
+            </div>
+
+            <div class="field">
+                <label for="community-contact-search">Find people</label>
+                <p class="field-hint" id="community-picker-help">People you add will join this community and its groups.</p>
+                <input id="community-contact-search" class="field-control" type="search" placeholder="Search name or username" autocomplete="off" />
+                <p id="community-selected-count" class="field-hint">0 selected</p>
+                <div id="community-contact-results" class="contact-picker community-form-picker" role="list"></div>
+            </div>
+
+            <p id="community-form-error" class="field-error" role="alert"></p>
+            <div class="community-form-actions">
+                <a href="/Communities" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary" id="community-submit">Add to community</button>
+            </div>
+        </form>
+    </main>
+</div>
+@section Scripts { <script src="/js/community-form.js" asp-append-version="true" defer></script> }

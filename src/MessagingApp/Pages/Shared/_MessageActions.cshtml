@@ -1,0 +1,52 @@
+<div id="chat-actions-menu" class="ctx-menu hidden" role="menu" aria-label="Chat options">
+    <button type="button" class="ctx-item" role="menuitem" onclick="showSavedMessages(false)"><i data-lucide="star"></i>Starred messages</button>
+    <button type="button" class="ctx-item" role="menuitem" onclick="showSavedMessages(true)"><i data-lucide="notebook-pen"></i>Message notes</button>
+    <a href="/Account/Settings" class="ctx-item" role="menuitem"><i data-lucide="settings"></i>Settings</a>
+</div>
+
+<div id="message-delete-modal" class="modal-layer hidden">
+    <section class="modal-card message-action-card" role="dialog" aria-modal="true" aria-labelledby="message-delete-title" aria-describedby="message-delete-description">
+        <div class="modal-head"><h2 id="message-delete-title">Delete message?</h2></div>
+        <div class="message-action-body"><p id="message-delete-description">Delete for me only removes this message from your account. Everyone else keeps their copy.</p><blockquote id="message-delete-preview" class="message-action-preview"></blockquote><p class="message-action-error" role="alert"></p></div>
+        <div class="message-action-buttons"><button type="button" class="btn btn-ghost" onclick="closeAllModals()">Cancel</button><button type="button" class="btn btn-ghost" onclick="confirmMessageDelete(false)">Delete for me</button><button id="message-delete-everyone" type="button" class="btn message-danger-button" onclick="confirmMessageDelete(true)">Delete for everyone</button></div>
+    </section>
+</div>
+
+<div id="message-edit-modal" class="modal-layer hidden">
+    <section class="modal-card message-action-card edit-message-card" role="dialog" aria-modal="true" aria-labelledby="message-edit-title" aria-describedby="message-edit-description">
+        <header class="edit-message-head"><div><h2 id="message-edit-title">Edit message</h2><p id="message-edit-description">Update your message for everyone in this chat.</p></div><button type="button" class="icon-btn" onclick="closeAllModals()" aria-label="Close editor"><i data-lucide="x"></i></button></header>
+        <form onsubmit="event.preventDefault();saveMessageEdit()"><div class="edit-message-body"><div class="edit-message-preview"><span>Original message</span><p id="message-edit-original"></p></div><label for="message-edit-text">Your message</label><textarea id="message-edit-text" maxlength="10000" rows="5" required oninput="updateMessageEditState()"></textarea><p class="message-action-error" role="alert"></p></div><footer class="edit-message-footer"><span id="message-edit-count"></span><div><button type="button" class="btn btn-ghost" onclick="closeAllModals()">Cancel</button><button id="message-edit-save" type="submit" class="btn btn-primary">Save changes</button></div></footer></form>
+    </section>
+</div>
+
+<div id="message-forward-modal" class="modal-layer hidden">
+    <section class="modal-card message-action-card message-forward-card" role="dialog" aria-modal="true" aria-labelledby="message-forward-title">
+        <div class="modal-head"><h2 id="message-forward-title">Forward message</h2><button type="button" class="icon-btn" onclick="closeAllModals()" aria-label="Close"><i data-lucide="x"></i></button></div>
+        <div class="message-action-body"><p id="message-forward-description">Choose up to five chats.</p><blockquote id="message-forward-preview" class="message-action-preview"></blockquote><label class="visually-hidden" for="message-forward-search">Search chats</label><input id="message-forward-search" type="search" class="field-control" placeholder="Search chats" oninput="filterMessageTargets(this.value)"/><p class="message-action-error" role="alert"></p></div>
+        <div id="message-forward-targets" class="message-target-list" aria-live="polite"></div><div class="message-action-buttons"><span id="message-forward-count" class="message-selection-count">0 selected</span><button type="button" class="btn btn-ghost" onclick="closeAllModals()">Cancel</button><button id="message-forward-send" type="button" class="btn btn-primary" onclick="sendForwardedMessage()" disabled>Send</button></div>
+    </section>
+</div>
+
+<div id="message-pin-modal" class="modal-layer hidden">
+    <section class="modal-card message-action-card" role="dialog" aria-modal="true" aria-labelledby="message-pin-title">
+        <div class="modal-head"><h2 id="message-pin-title">Pin message</h2></div><div class="message-action-body"><p>Everyone in this chat can see pinned messages. Choose how long to keep this one pinned.</p><fieldset class="message-pin-options"><legend class="visually-hidden">Pin duration</legend><label><input type="radio" name="message-pin-hours" value="24"/>24 hours</label><label><input type="radio" name="message-pin-hours" value="168" checked/>7 days</label><label><input type="radio" name="message-pin-hours" value="720"/>30 days</label></fieldset><p class="message-action-error" role="alert"></p></div><div class="message-action-buttons"><button type="button" class="btn btn-ghost" onclick="closeAllModals()">Cancel</button><button type="button" class="btn btn-primary" onclick="confirmMessagePin()">Pin</button></div>
+    </section>
+</div>
+
+<div id="message-note-modal" class="modal-layer hidden">
+    <section class="modal-card message-action-card personal-note-card" role="dialog" aria-modal="true" aria-labelledby="message-note-title" aria-describedby="message-note-privacy">
+        <header class="note-head"><div><h2 id="message-note-title">Personal note</h2><p id="message-note-privacy"><i data-lucide="lock-keyhole"></i>Only you can see this</p></div><button type="button" class="icon-btn" onclick="closeAllModals()" aria-label="Close note"><i data-lucide="x"></i></button></header>
+        <form onsubmit="event.preventDefault();saveMessageNote()">
+            <div class="note-body"><blockquote class="note-source"><strong id="message-note-sender"></strong><p id="message-note-preview"></p></blockquote><label for="message-note-text">Your note</label><textarea id="message-note-text" maxlength="5000" rows="6" placeholder="Write a note for yourself…" oninput="updateMessageNoteCount()"></textarea><p class="message-action-error" role="alert"></p></div>
+            <footer class="note-footer"><span id="message-note-count">0 / 5,000</span><div><button type="button" class="btn btn-ghost" onclick="closeAllModals()">Cancel</button><button type="submit" class="btn btn-primary">Save note</button></div></footer>
+        </form>
+    </section>
+</div>
+
+<div id="message-reaction-modal" class="modal-layer hidden">
+    <section class="modal-card message-action-card message-reaction-card" role="dialog" aria-modal="true" aria-labelledby="message-reaction-title"><div class="modal-head"><h2 id="message-reaction-title">React to message</h2><button type="button" class="icon-btn" onclick="closeAllModals()" aria-label="Close"><i data-lucide="x"></i></button></div><div id="message-reaction-picker" class="emoji-board message-emoji-picker"></div></section>
+</div>
+
+<div id="message-saved-modal" class="modal-layer hidden">
+    <section class="modal-card message-action-card message-forward-card" role="dialog" aria-modal="true" aria-labelledby="message-saved-title"><div class="modal-head"><h2 id="message-saved-title">Starred messages</h2><button type="button" class="icon-btn" onclick="closeAllModals()" aria-label="Close"><i data-lucide="x"></i></button></div><div id="message-saved-list" class="message-saved-list" aria-live="polite"></div></section>
+</div>

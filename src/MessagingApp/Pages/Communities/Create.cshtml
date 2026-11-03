@@ -1,0 +1,43 @@
+@page
+@model MessagingApp.Pages.Communities.CreateModel
+@{ ViewData["Title"] = "New community"; }
+<form id="anti-forgery-form" class="visually-hidden">@Html.AntiForgeryToken()</form>
+<div class="account-page community-form-page">
+    <header class="account-header">
+        <a href="/Communities" class="icon-btn" aria-label="Back to communities"><i data-lucide="arrow-left"></i></a>
+        <span>New community</span>
+    </header>
+    <main class="community-form-main">
+        <form id="community-form" class="community-form-card" data-mode="create" novalidate>
+            <div class="account-intro">
+                <h1>Bring your people together</h1>
+                <p>Create a space for your neighbourhood, team, or friends. You can add groups later.</p>
+            </div>
+
+            <div class="field">
+                <label for="community-name">Community name</label>
+                <input id="community-name" class="field-control" maxlength="100" required autocomplete="organization" placeholder="e.g. Neighbourhood watch" />
+            </div>
+
+            <div class="field">
+                <label for="community-description">Description <span class="field-optional">optional</span></label>
+                <textarea id="community-description" class="field-control" maxlength="500" rows="3" placeholder="What is this community about?"></textarea>
+            </div>
+
+            <div class="field">
+                <label for="community-contact-search">Find people</label>
+                <p class="field-hint" id="community-picker-help">Choose people to join. You can add more later.</p>
+                <input id="community-contact-search" class="field-control" type="search" placeholder="Search name or username" autocomplete="off" />
+                <p id="community-selected-count" class="field-hint">0 selected</p>
+                <div id="community-contact-results" class="contact-picker community-form-picker" role="list"></div>
+            </div>
+
+            <p id="community-form-error" class="field-error" role="alert"></p>
+            <div class="community-form-actions">
+                <a href="/Communities" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary" id="community-submit">Create community</button>
+            </div>
+        </form>
+    </main>
+</div>
+@section Scripts { <script src="/js/community-form.js" asp-append-version="true" defer></script> }
