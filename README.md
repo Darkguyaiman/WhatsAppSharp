@@ -1,4 +1,4 @@
-# Messaging App
+# WhatsAppSharp
 
 A responsive C# messaging application built with **ASP.NET Core 10**, **Razor Pages**, **SignalR**, and **MySQL 8+**. It supports direct and group conversations, voice messages, communities, status updates, shared media, notifications, and direct voice/video calls. Accounts sign in with Google.
 
@@ -29,7 +29,7 @@ Run it locally or deploy it as a Linux background service. The Linux installer h
 | Message info | Desktop side panel and mobile full-screen view with delivery/read receipts |
 | Voice messages | Record, preview, discard, send, waveforms, seeking, playback speeds |
 | Media | Images, documents, audio, video, stickers, shared media browsing |
-| Calls | Direct voice/video calls, ringing, mute, camera controls, reconnection, call history |
+| Calls | Full-screen direct voice/video calls, offline call invitations with push alerts, mute, camera controls, reconnection, call history |
 | Social | Text/photo status updates with 24-hour expiry and community groups |
 | App experience | Light/dark themes, responsive navigation, installable PWA, web push, quiet browser updates |
 

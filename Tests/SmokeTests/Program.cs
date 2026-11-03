@@ -474,6 +474,16 @@ async Task RunSocialChecksAsync(HttpClient alex, HttpClient sarah, string alexTo
         denied=false;try{await c.InvokeAsync("EndCall",call.Id,"completed");}catch{denied=true;}Check(denied,"Unrelated users cannot end a call");
         await a.InvokeAsync("EndCall",call.Id,"completed");
         var history=await sarah.GetFromJsonAsync<JsonElement>(origin+"/api/features?handler=Calls");Check(history.EnumerateArray().Any(c=>c.GetProperty("id").GetString()==call.Id&&c.GetProperty("state").GetString()=="completed"),"Call outcomes are saved in each participant’s history");
+        await b.StopAsync();
+        var offlineCall=await a.InvokeAsync<CallInfo>("StartCall",directId,false);
+        Check(offlineCall.State=="ringing","A caller can invite a recipient with no connected chat browser");
+        Check(await c.InvokeAsync<CallInfo?>("PendingCall") is null,"Pending offline invitations remain private to the recipient");
+        await b.StartAsync();
+        var pendingCall=await b.InvokeAsync<CallInfo?>("PendingCall");
+        Check(pendingCall?.Id==offlineCall.Id,"Opening the app restores a still-ringing offline call invitation");
+        await b.InvokeAsync("AcceptCall",offlineCall.Id);
+        await a.InvokeAsync("EndCall",offlineCall.Id,"completed");
+        Check(await b.InvokeAsync<CallInfo?>("PendingCall") is null,"Ended invitations cannot reappear as pending calls");
         denied=false;try{await a.InvokeAsync("StartCall",groupId,false);}catch{denied=true;}Check(denied,"Group calls are not presented as supported direct calls");
         var relay=await alex.GetFromJsonAsync<JsonElement>(origin+"/api/features?handler=CallConfig");Check(relay.GetProperty("relayConfigured").GetBoolean()&&!relay.ToString().Contains("synthetic-relay-secret"),"Call relay uses expiring credentials without disclosing its shared secret");
         Check((await FeaturePostAsync(alex,alexToken,"LeaveCommunity",new {},"&id="+communityId)).StatusCode==HttpStatusCode.BadRequest,"The last community admin must appoint a successor");

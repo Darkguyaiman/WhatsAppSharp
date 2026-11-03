@@ -21,6 +21,8 @@ public sealed class WebPushService : BackgroundService
     private readonly ILogger<WebPushService> _logger;
     private readonly Channel<(int MessageId, int[] Recipients)> _queue = Channel.CreateBounded<(int, int[])>(
         new BoundedChannelOptions(1000) { FullMode = BoundedChannelFullMode.Wait, SingleReader = true });
+    private readonly Channel<string> _calls = Channel.CreateBounded<string>(
+        new BoundedChannelOptions(100) { FullMode = BoundedChannelFullMode.Wait, SingleReader = true });
     private readonly VapidAuthentication? _vapid;
     private readonly DeliveryTokenService _deliveryTokens;
     public bool Enabled => _vapid != null;
@@ -69,6 +71,12 @@ public sealed class WebPushService : BackgroundService
             _logger.LogWarning("Push queue is full; notification skipped for message {MessageId}", messageId);
     }
 
+    public void EnqueueCall(string callId)
+    {
+        if (Enabled && !_calls.Writer.TryWrite(callId))
+            _logger.LogWarning("Push queue is full; call notification skipped for {CallId}", callId);
+    }
+
     public static string HashEndpoint(string endpoint) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(endpoint)));
 
     public sealed record VapidKeys(string PublicKey, string PrivateKey);
@@ -106,6 +114,26 @@ public sealed class WebPushService : BackgroundService
     {
         using var http = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false });
         var client = new PushServiceClient(http) { DefaultAuthentication = _vapid, AutoRetryAfter = false };
+        // Time-sensitive calls must not wait behind message notification traffic.
+        await Task.WhenAll(ProcessMessagesAsync(client, stoppingToken), ProcessCallsAsync(client, stoppingToken));
+    }
+
+    private async Task ProcessCallsAsync(PushServiceClient client, CancellationToken stoppingToken)
+    {
+        await foreach (var callId in _calls.Reader.ReadAllAsync(stoppingToken))
+        {
+            try
+            {
+                using var scope = _scopes.CreateScope();
+                await SendCallAsync(scope.ServiceProvider.GetRequiredService<AppDbContext>(), client, callId, stoppingToken);
+            }
+            catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+            { _logger.LogError(ex, "Unable to process notification for call {CallId}", callId); }
+        }
+    }
+
+    private async Task ProcessMessagesAsync(PushServiceClient client, CancellationToken stoppingToken)
+    {
         await foreach (var job in _queue.Reader.ReadAllAsync(stoppingToken))
         {
             try
@@ -156,6 +184,42 @@ public sealed class WebPushService : BackgroundService
             catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
             { _logger.LogError(ex, "Unable to process notification for message {MessageId}", job.MessageId); }
         }
+    }
+
+    private async Task SendCallAsync(AppDbContext db, PushServiceClient client, string callId, CancellationToken stoppingToken)
+    {
+        var call = await db.CallRecords.AsNoTracking().SingleOrDefaultAsync(c => c.Id == callId && c.State == "ringing", stoppingToken);
+        if (call is null) return;
+        var expiresAt = new DateTimeOffset(DateTime.SpecifyKind(call.CreatedAt, DateTimeKind.Utc)).AddSeconds(45);
+        var callerName = await db.Users.Where(u => u.Id == call.CallerId).Select(u => u.DisplayName).SingleAsync(stoppingToken);
+        var subscriptions = await db.WebPushSubscriptions.AsNoTracking().Where(s => s.UserId == call.RecipientId).ToListAsync(stoppingToken);
+        await Parallel.ForEachAsync(subscriptions, new ParallelOptions { MaxDegreeOfParallelism = 8, CancellationToken = stoppingToken }, async (subscription, token) =>
+        {
+            var ttl = (int)(expiresAt - DateTimeOffset.UtcNow).TotalSeconds;
+            if (ttl <= 0 || !IsValidEndpoint(subscription.Endpoint)) return;
+            var payload = JsonSerializer.Serialize(new {
+                type = "incoming-call", callId, title = callerName,
+                body = call.Video ? "Incoming video call. Tap to open WhatsAppSharp." : "Incoming voice call. Tap to open WhatsAppSharp.",
+                url = $"/Chat?conv={call.ConversationId}&call={call.Id}", recipientId = call.RecipientId,
+                tag = $"call-{call.Id}", expiresAt = expiresAt.ToUnixTimeMilliseconds()
+            });
+            try
+            {
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+                timeout.CancelAfter(TimeSpan.FromSeconds(Math.Min(10, ttl)));
+                await client.RequestPushMessageDeliveryAsync(new PushSubscription {
+                    Endpoint = subscription.Endpoint,
+                    Keys = new Dictionary<string, string> { ["p256dh"] = subscription.P256dh, ["auth"] = subscription.Auth }
+                }, new PushMessage(payload) { TimeToLive = ttl, Urgency = PushMessageUrgency.High }, timeout.Token);
+            }
+            catch (PushServiceClientException ex) when (ex.StatusCode is HttpStatusCode.Gone or HttpStatusCode.NotFound)
+            {
+                using var scope = _scopes.CreateScope();
+                await scope.ServiceProvider.GetRequiredService<AppDbContext>().WebPushSubscriptions.Where(s => s.Id == subscription.Id).ExecuteDeleteAsync(token);
+            }
+            catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+            { _logger.LogWarning("Call push delivery failed for subscription {Id}: {ErrorType}", subscription.Id, ex.GetType().Name); }
+        });
     }
 
     public override void Dispose()

@@ -38,7 +38,7 @@ public class AuthService : IAuthService
             Email = email,
             DisplayName = string.IsNullOrWhiteSpace(displayName) ? username : displayName.Trim(),
             AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? "/images/avatars/avatar-default.svg" : avatarUrl,
-            About = string.IsNullOrWhiteSpace(about) ? "Hey there! I am using WhatsApp Web." : about.Trim(),
+            About = string.IsNullOrWhiteSpace(about) ? "Hey there! I am using WhatsAppSharp." : about.Trim(),
             CreatedAt = DateTime.UtcNow,
             LastSeenAt = DateTime.UtcNow
         };

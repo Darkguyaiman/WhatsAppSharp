@@ -183,6 +183,12 @@ function setupCallEvents(hub){
     hub.onreconnected(async()=>{if(currentCall){try{await hub.invoke('ResumeCall',currentCall.id);if(callAnswered&&currentCall.callerId===currentUserId)await makeCallOffer(true);}catch(_){cleanupCall();showToast('The call ended while reconnecting.');}}else await restorePendingCall();});
 }
 async function restorePendingCall(){if(currentCall||callPreparing)return;try{const pending=await connection.invoke('PendingCall');if(pending){currentCall=pending;showCall(pending,true);ringCall();callRingtoneTimer=setInterval(ringCall,3500);}}catch(_){} }
+navigator.serviceWorker?.addEventListener('message',async event=>{
+    if(event.data?.type!=='OPEN_CALL')return;
+    if(currentCall){restoreCall();return;}
+    await restorePendingCall();
+    if(!currentCall)showToast('This call has ended. Check Calls for your history.');
+});
 document.addEventListener('keydown',event=>{
     const panel=document.getElementById('call-panel');if(!panel||panel.classList.contains('hidden'))return;
     if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();minimizeCall();return;}

@@ -1,4 +1,4 @@
-const CACHE = 'wa-shell-v3';
+const CACHE = 'wa-shell-v4';
 const PUBLIC_ASSETS = ['/offline.html', '/css/app.css', '/js/lucide.min.js', '/js/signalr.min.js', '/images/chat-wallpaper.png', '/images/welcome-laptop.svg', '/images/icons/icon-192.png', '/images/icons/icon-512.png', '/images/icons/maskable-512.png'];
 // Only public assets are cached. Chats, uploads, profiles, and auth responses stay private.
 self.addEventListener('install', event => {
@@ -35,14 +35,17 @@ self.addEventListener('push', event => {
         try { data = event.data?.json() || {}; } catch { data = {}; }
         const windows = await self.clients.matchAll({type: 'window', includeUncontrolled: true});
         const alreadyReading = windows.some(client => client.focused && client.visibilityState !== 'hidden');
+        const call = data.type === 'incoming-call';
+        const ringing = call && Number(data.expiresAt) > Date.now();
         // Every accepted push must show a notification, including on Safari.
         // Any focused app page is quiet, including a different chat or Settings.
         await self.registration.showNotification(data.title || 'New message', {
-            body: data.body || 'Open the app to view your message.',
+            body: call && !ringing ? 'Missed call. Open WhatsAppSharp to see your call history.' : data.body || 'Open the app to view your message.',
             icon: '/images/icons/icon-192.png', badge: '/images/icons/icon-192.png',
             tag: data.tag || 'new-message',
             silent: alreadyReading,
-            data: { url: data.url || '/Chat', recipientId: data.recipientId }
+            requireInteraction: ringing,
+            data: { url: data.url || '/Chat', recipientId: data.recipientId, type: data.type, callId: data.callId }
         });
         if (typeof data.deliveryToken === 'string') {
             try { await fetch('/api/delivery',{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:data.deliveryToken})}); }
@@ -57,7 +60,12 @@ self.addEventListener('notificationclick', event => {
         if (url.origin !== self.location.origin || url.pathname !== '/Chat') url = new URL('/Chat', self.location.origin);
         const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
         const existing = windows.find(client => new URL(client.url).pathname.startsWith('/Chat'));
-        if (existing) { await existing.navigate(url.href); return existing.focus(); }
+        if (existing) {
+            if (event.notification.data?.type === 'incoming-call') {
+                existing.postMessage({type:'OPEN_CALL',callId:event.notification.data.callId});
+            } else await existing.navigate(url.href);
+            return existing.focus();
+        }
         return self.clients.openWindow(url.href);
     })());
 });

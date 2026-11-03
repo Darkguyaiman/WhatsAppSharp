@@ -253,6 +253,31 @@ test('Push displays a notification when all app windows are closed', async()=>{
     assert.equal(worker.notifications[0].options.silent,false);
 });
 
+test('Incoming calls alert a closed app and retain their invitation link',async()=>{
+    const worker=workerContext();let promise;
+    worker.handlers.push({data:{json:()=>({type:'incoming-call',callId:'test-call',title:'Alex',body:'Incoming voice call',url:'/Chat?conv=3&call=test-call',expiresAt:Date.now()+45000})},waitUntil:p=>promise=p});await promise;
+    const notification=worker.notifications[0];
+    assert.equal(notification.options.requireInteraction,true);
+    assert.equal(notification.options.silent,false);
+    assert.equal(notification.options.data.callId,'test-call');
+    assert.equal(notification.options.body,'Incoming voice call');
+});
+
+test('Late call pushes show missed calls instead of an expired ringing invitation',async()=>{
+    const worker=workerContext();let promise;
+    worker.handlers.push({data:{json:()=>({type:'incoming-call',expiresAt:Date.now()-1,body:'Incoming call'})},waitUntil:p=>promise=p});await promise;
+    assert.equal(worker.notifications[0].options.requireInteraction,false);
+    assert.match(worker.notifications[0].options.body,/Missed call/);
+});
+
+test('Opening a call notification focuses an existing chat without reloading its drafts or media',async()=>{
+    const messages=[];let focused=false,navigated=false,closed=false,promise;
+    const worker=workerContext([{url:'https://chat.example/Chat',postMessage:data=>messages.push(data),focus:async()=>focused=true,navigate:async()=>navigated=true}]);
+    worker.handlers.notificationclick({notification:{close:()=>closed=true,data:{type:'incoming-call',callId:'test-call',url:'/Chat?conv=3&call=test-call'}},waitUntil:p=>promise=p});await promise;
+    assert.equal(focused,true);assert.equal(closed,true);assert.equal(navigated,false);
+    assert.equal(messages[0].type,'OPEN_CALL');assert.equal(messages[0].callId,'test-call');
+});
+
 for (const url of ['https://chat.example/Chat?conv=99','https://chat.example/Account/Settings'])
     test(`Push is silent while looking at ${new URL(url).pathname}, regardless of the incoming chat`,async()=>{
         const worker=workerContext([{focused:true,visibilityState:'visible',url}]);let promise;

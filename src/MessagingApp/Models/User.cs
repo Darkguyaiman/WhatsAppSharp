@@ -32,7 +32,7 @@ public class User
     public string AvatarColor { get; set; } = AvatarAppearance.RandomColor();
 
     [MaxLength(255)]
-    public string? About { get; set; } = "Hey there! I am using WhatsApp Web.";
+    public string? About { get; set; } = "Hey there! I am using WhatsAppSharp.";
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime LastSeenAt { get; set; } = DateTime.UtcNow;

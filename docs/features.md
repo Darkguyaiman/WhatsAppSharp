@@ -1,4 +1,4 @@
-# WhatsApp-style messaging app
+# WhatsAppSharp
 
 ASP.NET Core 10, Razor Pages, SignalR, and MySQL. Includes direct and group chat, replies, editing, deletion, emoji reactions, read receipts, typing, attachments, message search, dark/light themes, and an installable PWA with standards-based web push.
 
@@ -165,7 +165,11 @@ References: [browser recording support](https://developer.mozilla.org/en-US/docs
 
 ## Voice and video calling
 
-Open a **direct chat** and choose the phone or video button. The other person must have the app online. Calls include ringing, answer/decline, mute, camera toggle, minimize/return, elapsed time, and saved call history. Microphone/camera denial is handled with a useful message, and ending a call stops the media tracks. Group calls are not implemented.
+Open a **direct chat** and choose the phone or video button. You can invite someone who appears offline. Their subscribed devices receive a time-limited incoming-call push notification; tapping it opens the app, where they can answer while the invitation is still ringing. Existing open chat windows are focused without reloading drafts or active media. Calls include ringing, answer/decline, mute, camera toggle, minimize/return, elapsed time, and saved call history. Microphone/camera denial is handled with a useful message, and ending a call stops the media tracks. Group calls are not implemented.
+
+For calls while the app is closed, the recipient must enable notifications under Settings and have an internet connection. On iPhone/iPad, install the app on the Home Screen and enable notifications there. Browser and operating-system restrictions still govern notification delivery; this web app cannot guarantee a native phone-style continuous ringtone or connect an entirely disconnected device. Opening the app restores a still-ringing invitation even without push enabled. Call pushes use a separate bounded queue, high delivery urgency, and a TTL no longer than the remaining 45-second ringing window. Delayed pushes display a missed-call message.
+
+The installed app, browser titles, login, and settings use **WhatsAppSharp**. A shared square vector master supplies the favicon and app icons, with 192/512 px launcher icons, a full-background maskable icon, and a 180 px Apple touch icon. Existing installed shortcuts may need to be re-added if the operating system keeps an older name or icon.
 
 Voice and video calls fill the app window on desktop and phones, with a minimize control to return to chats while the call continues. Voice calls use a centred contact view with labelled circular controls. Video calls provide a large remote-video area, a smaller mirrored self-preview, and a waiting state when the other camera is unavailable. On phones, controls stay above the device safe area.
 

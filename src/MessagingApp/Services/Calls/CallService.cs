@@ -9,7 +9,7 @@ namespace MessagingApp.Services;
 public record CallInfo(string Id, int ConversationId, int CallerId, int RecipientId, string CallerName, string RecipientName, string CallerAvatar, string RecipientAvatar, bool Video, string State);
 
 // One active call per account; a chosen browser connection owns each media endpoint.
-public sealed class CallService(IServiceScopeFactory scopes, IHubContext<ChatHub> hub, IUserPresenceService presence, ILogger<CallService> logger) : BackgroundService
+public sealed class CallService(IServiceScopeFactory scopes, IHubContext<ChatHub> hub, IUserPresenceService presence, WebPushService push, ILogger<CallService> logger) : BackgroundService
 {
     sealed class ActiveCall(CallRecord record, CallInfo info, string callerConnection)
     {
@@ -33,7 +33,6 @@ public sealed class CallService(IServiceScopeFactory scopes, IHubContext<ChatHub
                 throw new HubException("Choose a direct chat to start a voice or video call.");
             var caller = conversation.Members.Single(m => m.UserId == userId).User;
             var peer = conversation.Members.Single(m => m.UserId != userId).User;
-            if (!presence.IsUserOnline(peer.Id)) throw new HubException("This person is offline. Try calling when they are online.");
             if (active.Values.Any(c => c.Record.CallerId == userId || c.Record.RecipientId == userId || c.Record.CallerId == peer.Id || c.Record.RecipientId == peer.Id))
                 throw new HubException("One of you is already on a call.");
             var record = new CallRecord { CallerId = userId, RecipientId = peer.Id, ConversationId = conversationId, Video = video };
@@ -41,6 +40,7 @@ public sealed class CallService(IServiceScopeFactory scopes, IHubContext<ChatHub
             db.CallRecords.Add(record); await db.SaveChangesAsync();
             active.Add(record.Id, new ActiveCall(record, info, connectionId));
             await hub.Clients.User(peer.Id.ToString()).SendAsync("IncomingCall", info);
+            push.EnqueueCall(record.Id);
             return info;
         }
         finally { gate.Release(); }
@@ -51,7 +51,7 @@ public sealed class CallService(IServiceScopeFactory scopes, IHubContext<ChatHub
         try
         {
             var call = Require(id, userId);
-            if (call.Record.RecipientId != userId || call.Record.State != "ringing") throw new HubException("This call is no longer available.");
+            if (call.Record.RecipientId != userId || call.Record.State != "ringing" || call.Record.CreatedAt <= DateTime.UtcNow.AddSeconds(-45)) throw new HubException("This call is no longer available.");
             call.RecipientConnection = connectionId; call.Record.State = "active"; call.Record.AnsweredAt = DateTime.UtcNow;
             await SaveAsync(call);
             await hub.Clients.Client(call.CallerConnection).SendAsync("CallAccepted", call.Info with { State = "active" });
@@ -99,7 +99,7 @@ public sealed class CallService(IServiceScopeFactory scopes, IHubContext<ChatHub
     public async Task<CallInfo?> PendingAsync(int userId)
     {
         await gate.WaitAsync();
-        try { return active.Values.FirstOrDefault(c => c.Record.RecipientId == userId && c.Record.State == "ringing")?.Info; }
+        try { return active.Values.FirstOrDefault(c => c.Record.RecipientId == userId && c.Record.State == "ringing" && c.Record.CreatedAt > DateTime.UtcNow.AddSeconds(-45))?.Info; }
         finally { gate.Release(); }
     }
     public async Task ResumeAsync(int userId, string connectionId, string id)

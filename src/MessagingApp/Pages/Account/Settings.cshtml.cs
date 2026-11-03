@@ -23,7 +23,7 @@ public class SettingsModel(IAuthService authService) : PageModel
         if (user == null) return RedirectToPage("/Account/Login");
         CurrentUser = user;
         AvatarUrl = AvatarAppearance.ForUser(user);
-        AboutText = string.IsNullOrWhiteSpace(user.About) ? "Hey there! I am using WhatsApp." : user.About;
+        AboutText = string.IsNullOrWhiteSpace(user.About) ? "Hey there! I am using WhatsAppSharp." : user.About;
         ContactLink = ContactCodes.Link(Request, user.Username);
         return Page();
     }
