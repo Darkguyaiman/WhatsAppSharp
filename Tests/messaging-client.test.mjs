@@ -51,6 +51,15 @@ test('Attachment links accept only app-owned upload paths', () => {
     assert.equal(vm.runInContext(`safeAttachmentUrl('${path}')`,context),path);
 });
 
+test('Internal message cards parse independently of whitespace and JSON property order',()=>{
+    const {context}=clientContext();
+    for(const content of ['{ "duration": 2, "wa": "voice", "waveform": [0.2] }','{\n"name":"A person","wa":"contact"}']) {
+        context.cardContent=content;const result=vm.runInContext('messagePreviewText(cardContent)',context);
+        assert.ok(!result.includes('{'));assert.ok(result==='Voice message'||result==='Contact: A person');
+    }
+    assert.equal(vm.runInContext('messagePreviewText(\'{"normal":"user JSON"}\')',context),'{"normal":"user JSON"}');
+});
+
 test('Sent messages and incoming messages in a focused app never chime', async () => {
     const {context} = clientContext(); let played=0;
     context.countSound = ()=>played++;

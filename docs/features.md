@@ -44,6 +44,16 @@ The offline view explains how to reconnect. Only public assets are cached: messa
 
 App updates activate automatically without an update toast. Existing pages reload quietly when there is no unsent work, edited form, open modal, recording, or active call; otherwise the reload waits until it is safe. First installation does not force a reload. Versioned assets and the updated public shell load on the next page load as well.
 
+On phones, the chat header keeps the back, voice call, video call, and options buttons visible. Search and favourites are available in the options menu so the contact name has room. The QR scanner includes **Show my QR**, which closes the scanner, releases its camera, and opens your own contact code.
+
+## Uploads and message rendering
+
+Attachments and voice recordings show transfer progress while uploading. Removing a pending attachment cancels its transfer. Reaching 100% means the browser has transferred the request; the server may still be finishing it. Failed uploads leave the draft available for retry.
+
+The authenticated upload endpoint validates the anti-forgery header before reading the multipart body, then streams the file directly to storage with a 15 MB limit. It avoids buffering the entire upload before making a second copy. Cancelled, invalid, empty, and oversized transfers remove partial files. Network bandwidth, disk speed, and reverse-proxy buffering can still affect deployed upload time.
+
+Shared-card and voice metadata are rendered as message cards, including when JSON whitespace or property order differs. Message updates rebuild the appropriate card instead of inserting stored metadata as text. Ordinary JSON sent as a text message remains visible as text. Voice messages without a usable attachment display an unavailable state.
+
 ## Production configuration
 
 Generate a VAPID pair once on a trusted machine:
@@ -156,6 +166,8 @@ References: [browser recording support](https://developer.mozilla.org/en-US/docs
 ## Voice and video calling
 
 Open a **direct chat** and choose the phone or video button. The other person must have the app online. Calls include ringing, answer/decline, mute, camera toggle, minimize/return, elapsed time, and saved call history. Microphone/camera denial is handled with a useful message, and ending a call stops the media tracks. Group calls are not implemented.
+
+Voice and video calls fill the app window on desktop and phones, with a minimize control to return to chats while the call continues. Voice calls use a centred contact view with labelled circular controls. Video calls provide a large remote-video area, a smaller mirrored self-preview, and a waiting state when the other camera is unavailable. On phones, controls stay above the device safe area.
 
 Media uses WebRTC with echo cancellation, noise suppression, automatic gain control, and a preferred 720p/30fps camera capture. Browser congestion control is supplemented by packet-loss/jitter/round-trip statistics: weak connections lower video bitrate, resolution, and frame rate, while audio retains higher priority. Recovery attempts renegotiate ICE and preserve the call through short signaling disconnections. Ringing times out at 45 seconds; a disconnected participant gets a 35-second server grace period. Calls are limited to four hours. Server restarts mark unfinished calls as interrupted. The call coordinator is single-instance, like this app’s existing presence service; multiple servers need a shared coordinator and signaling backplane.
 

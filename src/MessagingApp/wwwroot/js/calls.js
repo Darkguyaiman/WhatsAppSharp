@@ -20,6 +20,9 @@ let callBadSamples = 0;
 let callPreviousFocus;
 function callStatus(text) { const el=document.getElementById('call-state');if(el)el.textContent=text;document.getElementById('call-mini-label').textContent=text==='Connected'?'Return to call':text; }
 function showCall(info,incoming=false) {
+    document.getElementById('call-panel').classList.toggle('is-video',Boolean(info.video));
+    document.getElementById('call-panel').classList.toggle('is-incoming',incoming);
+    document.getElementById('call-video-waiting')?.classList.remove('hidden');
     callPreviousFocus=document.activeElement; setCallOverlay(true); document.getElementById('call-panel').setAttribute('aria-modal','true');
     const mine=info.callerId===currentUserId;
     document.getElementById('call-peer-name').textContent=mine?info.recipientName:info.callerName;
@@ -48,7 +51,7 @@ async function prepareCallPeer(info) {
     const config=await featureRequest('CallConfig');
     callPeer=new RTCPeerConnection({iceServers:config.iceServers,iceCandidatePoolSize:4,bundlePolicy:'max-bundle'});
     callIceQueue=[];callRetryCount=0;callPreviousStats.clear();callQualityLevel='good';
-    if(!config.relayConfigured)document.getElementById('call-quality').textContent='Some networks need a call relay. If the call cannot connect, the server owner needs to configure one.';
+    if(!config.relayConfigured)document.getElementById('call-quality').textContent='If the call does not connect, try another network.';
     callStream.getTracks().forEach(track=>{
         const sender=callPeer.addTrack(track,callStream);
         if(track.kind==='video') { const codecs=RTCRtpSender.getCapabilities?.('video')?.codecs;if(codecs?.length){const transceiver=callPeer.getTransceivers().find(t=>t.sender===sender);transceiver?.setCodecPreferences?.([...codecs.filter(c=>c.mimeType==='video/VP8'),...codecs.filter(c=>c.mimeType!=='video/VP8')]);} }
@@ -59,6 +62,7 @@ async function prepareCallPeer(info) {
         const stream=event.streams[0];if(!stream)return;
         // One playback element avoids duplicate remote audio in video calls.
         const media=document.getElementById(info.video?'call-remote-video':'call-remote-audio');media.srcObject=stream;media.play().catch(()=>document.getElementById('call-play-audio').classList.remove('hidden'));
+        if(info.video)document.getElementById('call-video-waiting')?.classList.toggle('hidden',stream.getVideoTracks().some(track=>track.enabled&&track.readyState!=='ended'));
     };
     callPeer.onconnectionstatechange=()=>{
         if(!currentCall||!callPeer)return;
@@ -96,6 +100,7 @@ async function acceptIncomingCall() {
         if(!currentCall||currentCall.id!==id){callStream.getTracks().forEach(t=>t.stop());callStream=null;return;}
         await prepareCallPeer(currentCall);
         await connection.invoke('AcceptCall',id);callAnswered=true;
+        document.getElementById('call-panel').classList.remove('is-incoming');
         document.getElementById('call-incoming-actions').classList.add('hidden');document.getElementById('call-active-actions').classList.remove('hidden');document.getElementById('call-video-stage').classList.toggle('hidden',!currentCall.video);
     }catch(error){await connection.invoke('EndCall',id,'failed').catch(()=>{});cleanupCall();showToast(error.message||'Couldn’t answer this call.');}
     finally{callPreparing=false;document.querySelector('#call-incoming-actions button:last-child').disabled=false;}
@@ -116,7 +121,7 @@ async function handleCallSignal(signal) {
         await callPeer.setRemoteDescription(payload);await flushCallIce();await callPeer.setLocalDescription(await callPeer.createAnswer());await sendCallSignal('answer',callPeer.localDescription.toJSON());
     }else if(signal.kind==='answer'){await callPeer.setRemoteDescription(payload);await flushCallIce();}
     else if(signal.kind==='ice'){if(callPeer.remoteDescription)await callPeer.addIceCandidate(payload).catch(()=>{});else if(callIceQueue.length<256)callIceQueue.push(payload);}
-    else if(signal.kind==='video-state'){document.getElementById('call-remote-video').classList.toggle('camera-off',!payload.enabled);}
+    else if(signal.kind==='video-state'){document.getElementById('call-remote-video').classList.toggle('camera-off',!payload.enabled);document.getElementById('call-video-waiting')?.classList.toggle('hidden',payload.enabled);}
 }
 async function flushCallIce(){for(const ice of callIceQueue.splice(0))await callPeer.addIceCandidate(ice).catch(()=>{});}
 function scheduleCallRestart() {

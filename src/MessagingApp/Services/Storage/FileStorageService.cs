@@ -29,7 +29,13 @@ public class FileStorageService : IFileStorageService
             return (false, null, null, 0, "File size exceeds the 15MB limit.");
         }
 
-        var ext = Path.GetExtension(file.FileName);
+        await using var source=file.OpenReadStream();
+        return await SaveStreamAsync(source,file.FileName,CancellationToken.None);
+    }
+
+    public async Task<(bool Success, string? Url, string? FileName, long Size, string? ErrorMessage)> SaveStreamAsync(Stream source,string fileName,CancellationToken cancellationToken)
+    {
+        var ext = Path.GetExtension(fileName);
         if (string.IsNullOrEmpty(ext) || !AllowedExtensions.Contains(ext))
         {
             return (false, null, null, 0, "File type not supported for upload.");
@@ -44,12 +50,23 @@ public class FileStorageService : IFileStorageService
         var safeFileName = $"{Guid.NewGuid():N}{ext.ToLowerInvariant()}";
         var fullPath = Path.Combine(uploadsFolder, safeFileName);
 
-        using (var stream = new FileStream(fullPath, FileMode.Create))
-        {
-            await file.CopyToAsync(stream);
+        var buffer=System.Buffers.ArrayPool<byte>.Shared.Rent(65536);
+        var committed=false;long length=0;
+        try {
+            await using(var stream=new FileStream(fullPath,new FileStreamOptions{Mode=FileMode.CreateNew,Access=FileAccess.Write,Share=FileShare.None,Options=FileOptions.Asynchronous|FileOptions.SequentialScan,BufferSize=65536})) {
+                int count;
+                while((count=await source.ReadAsync(buffer.AsMemory(),cancellationToken))>0) {
+                    length+=count;
+                    if(length>MaxFileSize)return(false,null,null,0,"File size exceeds the 15MB limit.");
+                    await stream.WriteAsync(buffer.AsMemory(0,count),cancellationToken);
+                }
+            }
+            if(length==0)return(false,null,null,0,"No file provided.");
+            committed=true;
+            return(true,$"/uploads/{safeFileName}",Path.GetFileName(fileName),length,null);
+        } finally {
+            System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
+            if(!committed&&File.Exists(fullPath))File.Delete(fullPath);
         }
-
-        var relativeUrl = $"/uploads/{safeFileName}";
-        return (true, relativeUrl, Path.GetFileName(file.FileName), file.Length, null);
     }
 }

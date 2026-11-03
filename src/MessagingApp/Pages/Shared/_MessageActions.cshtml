@@ -1,6 +1,8 @@
 <div id="chat-actions-menu" class="ctx-menu hidden" role="menu" aria-label="Chat options">
     <button type="button" class="ctx-item" role="menuitem" onclick="showSavedMessages(false)"><i data-lucide="star"></i>Starred messages</button>
     <button type="button" class="ctx-item" role="menuitem" onclick="showSavedMessages(true)"><i data-lucide="notebook-pen"></i>Message notes</button>
+    <button type="button" class="ctx-item mobile-chat-option" role="menuitem" onclick="closeAllModals();toggleChatSearch()"><i data-lucide="search"></i>Search messages</button>
+    <button type="button" class="ctx-item mobile-chat-option" role="menuitem" onclick="toggleConversationFavourite();closeAllModals()"><i data-lucide="star"></i>Toggle favourite</button>
     <a href="/Account/Settings" class="ctx-item" role="menuitem"><i data-lucide="settings"></i>Settings</a>
 </div>
 

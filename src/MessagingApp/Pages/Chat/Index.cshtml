@@ -14,7 +14,7 @@
     {
         if (string.IsNullOrWhiteSpace(content)) return "No messages yet";
         var raw = content.Trim();
-        if (!raw.StartsWith("{\"wa\":", StringComparison.Ordinal)) return content;
+        if (!raw.StartsWith("{", StringComparison.Ordinal)) return content;
         try
         {
             using var doc = System.Text.Json.JsonDocument.Parse(raw);
@@ -22,6 +22,7 @@
             string Field(string name) => root.TryGetProperty(name, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.String ? value.GetString() ?? "" : "";
             return (root.TryGetProperty("wa", out var kind) ? kind.GetString() : null) switch
             {
+                "voice" => "Voice message",
                 "contact" => "Contact: " + (Field("name") is { Length: > 0 } name ? name : Field("username")),
                 "poll" => "Poll: " + Field("question"),
                 "event" => "Event: " + Field("title"),
@@ -162,7 +163,7 @@
                         </div>
                     </div>
                     <div class="head-actions">
-                        <button type="button" class="icon-btn direct-call-action" onclick="startChatCall(false)" aria-label="Voice call" title="Voice call"><i data-lucide="phone"></i></button><button type="button" class="icon-btn direct-call-action" onclick="startChatCall(true)" aria-label="Video call" title="Video call"><i data-lucide="video"></i></button><button id="favourite-chat-btn" type="button" class="favourite-chat-action" onclick="toggleConversationFavourite()" aria-pressed="false"><i data-lucide="star"></i><span>Add to favourites</span></button>
+                        <button type="button" class="icon-btn direct-call-action" onclick="startChatCall(false)" aria-label="Voice call" title="Voice call"><i data-lucide="phone"></i></button><button type="button" class="icon-btn direct-call-action" onclick="startChatCall(true)" aria-label="Video call" title="Video call"><i data-lucide="video"></i></button><button id="favourite-chat-btn" type="button" class="icon-btn favourite-chat-action" onclick="toggleConversationFavourite()" aria-pressed="false" aria-label="Add to favourites" title="Add to favourites"><i data-lucide="star"></i></button>
                         <button type="button" class="icon-btn" onclick="toggleChatSearch()" title="Search">
                             <i data-lucide="search"></i>
                         </button>
@@ -356,6 +357,7 @@
             <div class="qr-actions">
                 <button type="button" class="btn btn-primary" id="qr-start-camera" onclick="startQrCamera()">Start camera</button>
                 <label class="btn btn-ghost qr-upload">Use a photo<input id="qr-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" onchange="scanQrFile(this)" /></label>
+                <button type="button" class="btn btn-ghost" onclick="openMyQr()"><i data-lucide="qr-code"></i>Show my QR</button>
             </div>
             <canvas id="qr-canvas" class="qr-canvas" aria-hidden="true"></canvas>
         </div>

@@ -48,6 +48,8 @@ var checks = 0;
 void Check(bool result, string name) { if (!result) throw new Exception("FAIL: " + name); checks++; Console.WriteLine("PASS: " + name); }
 try
 {
+    await StorageChecks.RunAsync(Check);
+    Check(MessageContentPreview.Text("{\"duration\":2, \"wa\":\"voice\"}")=="Voice message","Server-rendered voice previews never expose metadata JSON");
     using (var verifiedProfile = JsonDocument.Parse("{\"sub\":\"test-subject\",\"email_verified\":true}"))
         Check(GoogleProfile.HasVerifiedEmail(verifiedProfile.RootElement), "Google v3 email_verified is accepted");
     foreach (var profile in new[] { "{\"email_verified\":false}", "{}", "{\"email_verified\":\"true\"}", "{\"verified_email\":true}" })

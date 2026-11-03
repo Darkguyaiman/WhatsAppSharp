@@ -11,7 +11,7 @@
     <header><span id="call-type-label">Voice call</span><button type="button" class="icon-btn" onclick="minimizeCall()" aria-label="Minimize call"><i data-lucide="minimize-2"></i></button></header>
     <div class="call-body">
     <div class="call-peer"><img id="call-peer-avatar" src="/images/favicon.svg" width="88" height="88" alt="" /><h2 id="call-peer-name"></h2><p id="call-state" role="status"></p><span id="call-timer"></span></div>
-    <div id="call-video-stage" class="call-video-stage hidden"><video id="call-remote-video" autoplay playsinline></video><video id="call-local-video" autoplay playsinline muted></video></div>
+    <div id="call-video-stage" class="call-video-stage hidden"><div id="call-video-waiting" class="call-video-waiting"><i data-lucide="video"></i><span>Waiting for their camera</span></div><video id="call-remote-video" autoplay playsinline></video><div class="call-self-preview"><video id="call-local-video" autoplay playsinline muted></video><span>You</span></div></div>
     <audio id="call-remote-audio" autoplay></audio>
     <p id="call-quality" class="call-quality" role="status"></p>
     </div><footer class="call-footer"><button type="button" class="btn btn-ghost hidden" id="call-play-audio" onclick="resumeCallAudio()">Play call audio</button>

@@ -16,6 +16,7 @@ let hasOlderMessages = false;
 let loadingOlder = false;
 let sendingMessage = false;
 let uploadingAttachment = false;
+let attachmentUpload = null;
 let attachmentVersion = 0;
 let reconnectTimer = null;
 let readingConversation = null;
@@ -243,7 +244,7 @@ function createDateSeparator(dateText) {
 
 function parseWaCard(content) {
     const raw = String(content || '').trim();
-    if (!raw.startsWith('{"wa":')) return null;
+    if (!raw.startsWith('{')) return null;
     try {
         const data = JSON.parse(raw);
         if (!data || !['contact', 'poll', 'event', 'catalogue', 'sticker', 'voice'].includes(data.wa)) return null;
@@ -369,6 +370,8 @@ function createMessageElement(msg) {
     let contentHtml = "";
     if (msg.isDeleted) {
         contentHtml = `<span class="deleted-msg">This message was deleted</span>`;
+    } else if (msg.type === 3) {
+        if (!fileUrl) contentHtml = '<span class="deleted-msg">Voice message unavailable</span>';
     } else if (card && !['sticker', 'voice'].includes(card.wa)) {
         contentHtml = renderShareCard(card);
     } else if (card?.caption) {
@@ -547,19 +550,8 @@ function updateMessageContent(message) {
     loadedMessages.set(message.id, message);
     const msgEl = document.getElementById(`msg-${message.id}`);
     if (!msgEl) return;
-
-    const textEl = msgEl.querySelector(".message-text");
-    if (textEl) {
-        const onlyEmoji = typeof emojiOnlyCount === "function" ? emojiOnlyCount(message.content) : 0;
-        textEl.classList.toggle("emoji-only", onlyEmoji > 0 && onlyEmoji <= 3);
-        textEl.innerHTML = typeof formatEmoji === "function" ? formatEmoji(message.content) : escapeHtml(message.content);
-    }
-
-    // Ensure (edited) badge is present
-    const footer = msgEl.querySelector(".msg-foot");
-    if (footer && !footer.innerHTML.includes("(edited)")) {
-        footer.insertAdjacentHTML("afterbegin", `<span>(edited)</span>`);
-    }
+    const replacement=createMessageElement(message);msgEl.replaceWith(replacement);
+    window.refreshIcons?.(replacement);window.watchMessageLayout?.(replacement);
 }
 
 // Message Delete update
@@ -784,6 +776,7 @@ async function uploadAttachment(file, kind) {
     closeAllModals();
     const uploadingTo = activeConversationId;
     const uploadVersion = ++attachmentVersion;
+    attachmentUpload?.abort();const controller=attachmentUpload=new AbortController();
     uploadingAttachment = true; updateSendButtonState();
     const formData = new FormData();
     formData.append("file", file);
@@ -794,7 +787,9 @@ async function uploadAttachment(file, kind) {
     document.getElementById("attachment-name-preview").textContent = `Uploading ${file.name}...`;
 
     try {
-        const res = await fetch("/api/upload", {
+        const data = window.uploadFile ? await window.uploadFile(file,{signal:controller.signal,onProgress:percent=>{
+            if(uploadVersion===attachmentVersion)document.getElementById('attachment-name-preview').textContent=percent<100?`Uploading ${file.name} · ${percent}%`:'Finishing upload…';
+        }}) : await (async()=>{const res = await fetch("/api/upload", {
             method: "POST",
             headers: { RequestVerificationToken: document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' },
             body: formData
@@ -803,7 +798,7 @@ async function uploadAttachment(file, kind) {
             const err = await res.json();
             throw new Error(err.error || "Upload failed");
         }
-        const data = await res.json();
+        return await res.json();})();
         if (uploadVersion !== attachmentVersion || uploadingTo !== activeConversationId) return;
         pendingAttachment = {
             url: data.url,
@@ -815,14 +810,16 @@ async function uploadAttachment(file, kind) {
         document.getElementById("attachment-name-preview").textContent = `${data.name} (${formatBytes(data.size)})`;
         updateSendButtonState();
     } catch (err) {
+        if(err.name==='AbortError')return;
         showToast('Upload failed: ' + err.message);
         if (uploadVersion === attachmentVersion) clearPendingAttachment();
     } finally {
-        uploadingAttachment = false; updateSendButtonState();
+        if(attachmentUpload===controller){attachmentUpload=null;uploadingAttachment=false;updateSendButtonState();}
     }
 }
 
 function clearPendingAttachment() {
+    attachmentUpload?.abort();attachmentUpload=null;uploadingAttachment=false;
     ++attachmentVersion;
     pendingAttachment = null;
     const banner = document.getElementById("attachment-preview-bar");
@@ -1103,7 +1100,6 @@ function updateFavouriteButton() {
     button.setAttribute('aria-pressed', String(favourite));
     button.setAttribute('aria-label', favourite ? 'Remove from favourites' : 'Add to favourites');
     button.title = favourite ? 'Remove from favourites' : 'Add to favourites';
-    button.querySelector('span').textContent = favourite ? 'In favourites' : 'Add to favourites';
 }
 
 function openNewGroupModal() {

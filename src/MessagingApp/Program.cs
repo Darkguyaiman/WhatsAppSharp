@@ -220,21 +220,7 @@ app.Use(async (context, next) =>
 });
 
 // File Upload API Endpoint
-app.MapPost("/api/upload", async (IFormFile file, IFileStorageService storage) =>
-{
-    var result = await storage.SaveFileAsync(file);
-    if (!result.Success)
-    {
-        return Results.BadRequest(new { error = result.ErrorMessage });
-    }
-
-    return Results.Ok(new
-    {
-        url = result.Url,
-        name = result.FileName,
-        size = result.Size
-    });
-}).RequireAuthorization();
+app.MapPost("/api/upload", UploadEndpoint.Handle).RequireAuthorization();
 
 app.MapHub<ChatHub>("/hubs/chat");
 

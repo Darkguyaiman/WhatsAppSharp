@@ -314,9 +314,9 @@
                 const extension = mime.includes('mp4') ? 'm4a' : mime.includes('ogg') ? 'ogg' : mime.includes('webm') ? 'webm' : null;
                 if (!extension) throw new Error('This browser’s recording format is unsupported. Try another browser.');
                 const data = new FormData(); data.append('file', draft.blob, `Voice message.${extension}`);
-                const response = await fetch('/api/upload', {method:'POST', headers:{RequestVerificationToken:document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''}, body:data});
-                if (!response.ok || response.redirected) throw new Error('Upload failed. Check your connection and try again.');
-                draft.uploaded = await response.json();
+                if(window.uploadFile)draft.uploaded=await window.uploadFile(new File([draft.blob],`Voice message.${extension}`,{type:mime}),{onProgress:percent=>{if(activeConversationId===id)node('voice-record-status').textContent=`Uploading voice message · ${percent}%`;}});
+                else {const response = await fetch('/api/upload', {method:'POST', headers:{RequestVerificationToken:document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''}, body:data});
+                if (!response.ok || response.redirected) throw new Error('Upload failed. Check your connection and try again.');draft.uploaded = await response.json();}
             }
             const file = draft.uploaded;
             await connection.invoke('SendMessage', id, JSON.stringify({wa:'voice',duration:draft.duration,waveform:draft.waveform}),

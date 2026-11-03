@@ -128,7 +128,7 @@ public sealed class WebPushService : BackgroundService
                     {
                         title = msg.Sender.DisplayName,
                         body = msg.Type == MessageType.Voice ? "Sent a voice message" :
-                            string.IsNullOrWhiteSpace(msg.Content) ? "Sent an attachment" : msg.Content[..Math.Min(msg.Content.Length, 180)],
+                            string.IsNullOrWhiteSpace(msg.Content) ? "Sent an attachment" : MessageContentPreview.Text(msg.Content)[..Math.Min(MessageContentPreview.Text(msg.Content).Length,180)],
                         url = $"/Chat?conv={msg.ConversationId}",
                         conversationId = msg.ConversationId,
                         recipientId = subscription.UserId,
